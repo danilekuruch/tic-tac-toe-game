@@ -1,22 +1,7 @@
-import itertools
 from enum import Enum
-from typing import Iterable
 from dataclasses import dataclass
 from abc import ABC
 import string
-import operator
-
-
-def flatten_list(obj_list):
-    if not obj_list:
-        return []
-
-    for obj in obj_list:
-        if isinstance(obj, Iterable):
-            yield from flatten_list(obj)
-        else:
-            yield obj
-    return []
 
 
 class GameRole(Enum):
@@ -52,11 +37,7 @@ class BoardCell:
 
 class GameBoard:
     def __init__(self):
-        self.cells = [
-            BoardCell(x, y)
-            for x in range(3)
-            for y in range(3)
-        ]
+        self.cells = [BoardCell(x, y) for x in range(3) for y in range(3)]
 
 
 class TicTacToeGame:
@@ -90,66 +71,6 @@ class TicTacToeGame:
                 for row, col in solution
             ]
             self.win_solutions.append(WinSolution(tuple(board_cells)))
-
-    def get_board_cell(self, row, col):
-        for board_cell in self.board.cells:
-            if board_cell.row == row and board_cell.col == col:
-                return board_cell
-        return None
-
-    def show_board(self):
-        print("-" * 9)
-
-        for x in range(3):
-            cell_view = " ".join([
-                role.name if (role := self.get_board_cell(x, y).role) else " "
-                for y in range(3)
-            ])
-            print(f"| {cell_view} |")
-
-        print("-" * 9)
-
-    def get_players_result(self):
-        player1_won = False
-        player2_won = False
-        for win_solution in self.win_solutions:
-            if self.check_solution(win_solution, self.player1):
-                player1_won = True
-            elif self.check_solution(win_solution, self.player2):
-                player2_won = True
-        return player1_won, player2_won
-
-    def has_any_winner(self):
-        player1_won, player2_won = self.get_players_result()
-        return player1_won ^ player2_won
-
-    def check_game_state(self):
-        player1_won, player2_won = self.get_players_result()
-
-        if player1_won and player2_won:
-            return True, "Impossible"
-        elif player1_won:
-            return True, self.player1.role.name + " wins"
-        elif player2_won:
-            return True, self.player2.role.name + " wins"
-
-        flatten_board = self.board.cells
-        count_x = len(list(filter(lambda cell: cell.role == GameRole.X, flatten_board)))
-        count_o = len(list(filter(lambda cell: cell.role == GameRole.O, flatten_board)))
-        if abs(count_x - count_o) > 1:
-            return True, "Impossible"
-
-        if any(cell.role is None for cell in self.board.cells):
-            return False, "Game not finished"
-
-        return True, "Draw"
-
-    def show_game_result(self):
-        _, msg = self.check_game_state()
-        print(msg)
-
-    def show_error(self, err_msg):
-        print(err_msg)
 
     def check_solution(self, win_solution: WinSolution, player: BasePlayer):
         return all(
@@ -203,6 +124,55 @@ class TicTacToeGame:
 
         self.show_board()
         self.show_game_result()
+
+    def get_board_cell(self, row, col):
+        for board_cell in self.board.cells:
+            if board_cell.row == row and board_cell.col == col:
+                return board_cell
+        return None
+
+    def get_players_result(self):
+        player1_won = False
+        player2_won = False
+        for win_solution in self.win_solutions:
+            if self.check_solution(win_solution, self.player1):
+                player1_won = True
+            elif self.check_solution(win_solution, self.player2):
+                player2_won = True
+        return player1_won, player2_won
+
+    def check_game_state(self):
+        if any(cell.role is None for cell in self.board.cells):
+            return False, "Game not finished"
+
+        player1_won, player2_won = self.get_players_result()
+        if player1_won and player2_won:
+            return True, "Impossible"
+        elif player1_won:
+            return True, self.player1.role.name + " wins"
+        elif player2_won:
+            return True, self.player2.role.name + " wins"
+
+        return True, "Draw"
+
+    def show_game_result(self):
+        _, msg = self.check_game_state()
+        print(msg)
+
+    def show_error(self, err_msg):
+        print(err_msg)
+
+    def show_board(self):
+        print("-" * 9)
+
+        for x in range(3):
+            cell_view = " ".join([
+                role.name if (role := self.get_board_cell(x, y).role) else " "
+                for y in range(3)
+            ])
+            print(f"| {cell_view} |")
+
+        print("-" * 9)
 
 
 def main():
